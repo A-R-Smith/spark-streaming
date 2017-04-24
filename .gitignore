@@ -1,6 +1,13 @@
 /bin/
+
 /target/
+
+.cache-main
+.settings
 .classpath
+
 .project
+
 /lib/
+
 /project/

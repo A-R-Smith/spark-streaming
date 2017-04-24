@@ -9,14 +9,15 @@ object KafkaReader {
         .appName("KafkaReader")
         .getOrCreate()
         
+      val writer = new KafkaTupleSink("water","10.6.0.6:9092")   
       import spark.implicits._
         
       val kafka = spark.readStream
-      .format("kafka")
-      .option("kafka.bootstrap.servers", "10.6.0.6:9092")
-      .option("subscribe", "sensor")
-      .option("startingOffsets", "latest")
-      .load().as[(String,String,String,Int,BigInt,Timestamp,Int)]
+        .format("kafka")
+        .option("kafka.bootstrap.servers", "10.6.0.6:9092")
+        .option("subscribe", "sensor")
+        .option("startingOffsets", "latest")
+        .load().as[(String,String,String,Int,BigInt,Timestamp,Int)]
         
       val ds = kafka.select(get_json_object(($"value").cast("string"),"$.value").alias("value"),
                              get_json_object(($"value").cast("string"),"$.type").alias("type"),
@@ -30,21 +31,27 @@ object KafkaReader {
 //              implicit val format = DefaultFormats
 //              parse(row._2).extract[DeviceData]
 //          } 
-      
-      val query = ds.filter($"type"==="water")
+
+      val water = ds.filter($"type"==="water")
                     .filter($"value">0.0)
                     .groupBy(
-                          window($"ts", "1 minutes", "30 seconds", "1 seconds"),
+                          window($"ts", "1 minutes", "30 seconds"),
                           $"deviceID")
                     .count()
                     .orderBy($"window".desc)
-                    .writeStream
-                    .format("console")
-                    .option("truncate", false)
-                    .outputMode("complete")
-                    .start()
+                    .as[(String,String,String)]
+//      val query1 =   water.writeStream
+//                    .format("console")
+//                    .option("truncate", false)
+//                    .outputMode("complete")
+//                    .start()
+      val query2 = water.writeStream
+                       .foreach(writer)
+                       .outputMode("complete")
+                       .start()
 
-      query.awaitTermination();
+//      query1.awaitTermination();
+      query2.awaitTermination();
   }
 }
   

@@ -1,14 +1,17 @@
 name := "KafkaReader"
 version := "1.0"
 scalaVersion := "2.11.8"
+//scalaVersion := "2.10.6"
 
 libraryDependencies ++= Seq(
 	"org.apache.spark" %% "spark-core" % "2.1.0" % "provided",
 	"org.apache.spark" %% "spark-catalyst" % "2.1.0" % "provided",
 	"org.apache.spark" %% "spark-sql"  % "2.1.0" % "provided",
 	"org.apache.spark" %% "spark-streaming" % "2.1.0" % "provided",
-   // "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.6",
-    "org.apache.spark" % "spark-sql-kafka-0-10_2.11" % "2.1.0" 
+	"org.apache.spark" %% "spark-sql-kafka-0-10" % "2.1.0",
+	"org.elasticsearch" %% "elasticsearch-spark-20" % "5.3.1"
+
+       // "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.6"
     )
     
 assemblyMergeStrategy in assembly := {
