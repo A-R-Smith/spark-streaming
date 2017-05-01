@@ -24,7 +24,7 @@ object Enricher {
         .option("kafka.bootstrap.servers", "10.6.0.6:9092")
         .option("subscribe", "sensor")
         .option("startingOffsets", "latest")
-        .load().as[(String,String,String,Int,BigInt,Timestamp,Int)]
+        .load()//.as[(String,String,String,Int,BigInt,Timestamp,Int)]
       val geo_df = spark.read.format("org.elasticsearch.spark.sql")
                         .options(options)
                         .load("geo/location")
