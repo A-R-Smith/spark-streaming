@@ -1,0 +1,9 @@
+[Unit]
+After=network.target
+[Service]
+Type=forking
+ExecStart=/usr/local/sbin/iot-events-start.sh
+ExecStop=/usr/local/sbin/iot-events-stop.sh
+TimeoutSec=infinity
+[Install]
+WantedBy=default.target
