@@ -27,7 +27,7 @@ object EventGenerator {
         .getOrCreate()
         
 //      val writer = new ElasticRowSink("events","data",elasticURL,elasticPORT,elasticClusterName)   
-      val writer = new KafkaRowSink("events",kafkaURL)
+      val writer = new KafkaStringSink("events",kafkaURL)
       import spark.implicits._
         
       val kafka = spark.readStream
@@ -43,30 +43,32 @@ object EventGenerator {
                              get_json_object(($"value").cast("string"),"$.type").alias("type"),
                              get_json_object(($"value").cast("string"),"$.deviceID").alias("deviceID"),
                              get_json_object(($"value").cast("string"),"$.gatewayID").alias("gatewayID"),
-                             get_json_object(($"value").cast("string"),"$.event_ts").alias("event_ts"))
+                             get_json_object(($"value").cast("string"),"$.event_ts").cast("long").alias("event_ts"))
                   //  .withColumn("ts",from_unixtime($"event_ts".divide(1000)))
-
+                  
       val join_df = sensor.join(settings, Seq("deviceID","type","gatewayID"),"left_outer")
                 .filter(row => {
+                  //System.out.println(row.getAs[String]("type") +"  "+ row.getAs[Double]("value"));
                   row.getAs[String]("type") match {
   //                          case "water" => ????
                     case "gas" =>
-                      val thresh = row.getAs[String]("threshold")
+                      
+                      val thresh = row.getAs[Double]("threshold")
                       if (Objects.nonNull(thresh)) {
                           row.getAs[Double]("value")>thresh.toDouble
                       } else {
                           false
                       }
                     case "battery" =>
-                      val thresh = row.getAs[String]("threshold")
+                      val thresh = row.getAs[Double]("threshold")
                       if (Objects.nonNull(thresh)) {
                           row.getAs[Double]("value")<thresh.toDouble
                       } else {
                           false
                       }                        
                     case "humidity"|"temp" => {
-                      val minThresh = row.getAs[String]("min_threshold")
-                      val maxThresh = row.getAs[String]("max_threshold")
+                      val minThresh = row.getAs[Double]("minThreshold")
+                      val maxThresh = row.getAs[Double]("maxThreshold")
                       val value = row.getAs[Double]("value")
                       if (Objects.nonNull(minThresh)&&Objects.nonNull(maxThresh)) {
                           value<minThresh.toDouble||value>maxThresh.toDouble
@@ -77,12 +79,11 @@ object EventGenerator {
                     case _  => false
                   }
                 })
-                 
-      val query = join_df
-//                  .map(row=>{
-//                      val m = row.getValuesMap(row.schema.fieldNames)
-//                      JSONObject(m).toString()
-//                    })
+                
+      //convert data frame to json
+      val jsonDf = join_df.select(to_json(struct(join_df.columns.map(col):_*)))
+      
+      val query = jsonDf
                     .writeStream
                        .foreach(writer)
 //                    .format("console")

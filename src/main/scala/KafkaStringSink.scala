@@ -9,7 +9,7 @@ import org.apache.spark.sql.functions.to_json
 
 
 
- class  KafkaRowSink(topic:String, servers:String) extends ForeachWriter[Row] {
+ class  KafkaStringSink(topic:String, servers:String) extends ForeachWriter[Row] {
       val kafkaProperties = new Properties()
       kafkaProperties.put("bootstrap.servers", servers)
       kafkaProperties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
@@ -21,17 +21,22 @@ import org.apache.spark.sql.functions.to_json
         producer = new KafkaProducer(kafkaProperties)
         true
       }
-
+      
       def process(value: Row): Unit = {
-        val m = value.getValuesMap(value.schema.fieldNames)
-        
-        var json = "{";
-        m.foreach(p=> {
-          json = json + "\"" + p._1 + "\":\"" + p._2 + "\","
-        })
-        json = json.dropRight(1) + "}" // dropRight removes last comma
+        val json = value.getString(0);
         producer.send(new ProducerRecord(topic, json))
       }
+
+//      def process(value: Row): Unit = {
+//        val m = value.getValuesMap(value.schema.fieldNames)
+//        
+//        var json = "{";
+//        m.foreach(p=> {
+//          json = json + "\"" + p._1 + "\":\"" + p._2 + "\","
+//        })
+//        json = json.dropRight(1) + "}" // dropRight removes last comma
+//        producer.send(new ProducerRecord(topic, json))
+//      }
 
       def close(errorOrNull: Throwable): Unit = {
         producer.close()
