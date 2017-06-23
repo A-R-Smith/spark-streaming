@@ -1,6 +1,8 @@
+package mains
+
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import java.sql.Timestamp
+import sinks.KafkaRowSink
 
 object WaterEventGenerator {
   val kafkaURL = "10.6.0.6:9092"
