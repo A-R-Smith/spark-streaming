@@ -1,36 +1,8 @@
-lazy val commonSettings = Seq(
-	version := "1.0"
-	scalaVersion := "2.11.8"
-	libraryDependencies ++= Seq(
-		"org.apache.spark" %% "spark-core" % "2.1.+" % "provided",
-		"org.apache.spark" %% "spark-catalyst" % "2.1.+" % "provided",
-		"org.apache.spark" %% "spark-sql"  % "2.1.+" % "provided",
-		"org.apache.spark" %% "spark-streaming" % "2.1.+" % "provided"
-	)
-)
-
-lazy val root = (project in file(".")).aggregate(event_jar, geo_jar)   
-
 name := "IoTEvents"
+version := "1.0"
+scalaVersion := "2.11.8"
+assemblyJarName in assembly := "IoTEvents.jar"
 
-lazy val event_jar = (project in file("config")).
-  settings(commonSettings: _*).
-  settings(
-    name := "myapp-config",
-    test in assembly := {},
-    assemblyJarName in assembly := "myapp-config.jar",
-    includeFilter in Compile := "myapp.conf"
-  )
-
-lazy val geo_jar = (project in file("build")).
-  settings(commonSettings: _*).
-  settings(
-    name := "myapp",
-    assemblyMergeStrategy in assembly := { file =>
-        if(file.startsWith("config\\")) MergeStrategy.discard else MergeStrategy.defaultMergeStrategy(file)
-    },
-    libraryDependencies += ...
-  )
 
 libraryDependencies ++= Seq(
 	"org.apache.spark" %% "spark-core" % "2.1.+" % "provided",

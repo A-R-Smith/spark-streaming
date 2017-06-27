@@ -4,7 +4,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 import sinks.KafkaRowSink
 
-object Enricher {
+object GeoEnricher {
   val options = Map("es.nodes" -> "10.6.0.10",
     "es.port" -> "9200",
     "es.nodes.wan.only" -> "true")
@@ -17,7 +17,7 @@ object Enricher {
     import spark.implicits._
 
     // Create Kafka Sink
-    val writer = new KafkaRowSink("geoEnriched", "10.6.0.6:9092")
+    val writer = new KafkaRowSink("geoenriched", "10.6.0.6:9092")
 
     // Create streaming dataframe Sensor Kafka topic
     val kafka = spark.readStream
