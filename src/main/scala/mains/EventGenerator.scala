@@ -28,9 +28,10 @@ object EventGenerator {
       .getOrCreate()
 
     //      val writer = new ElasticRowSink("events","data",elasticURL,elasticPORT,elasticClusterName)   
-    val writer = new KafkaRowSink("events", kafkaURL)
+    
     import spark.implicits._
 
+    val writer = new KafkaRowSink("events", kafkaURL)
     val kafka = spark.readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", kafkaURL)
@@ -48,8 +49,9 @@ object EventGenerator {
       get_json_object(($"value").cast("string"), "$.event_ts").cast("long").alias("event_ts"))
     //  .withColumn("ts",from_unixtime($"event_ts".divide(1000)))
 
-    val join_df = sensor.join(settings, Seq("deviceID", "type", "gatewayID"), "left_outer")
-      .filter(row => {
+    val join_df = sensor.join(settings, Seq("deviceID", "type", "gatewayID"), "inner")
+    
+    val events = join_df.filter(row => {
         //System.out.println(row.getAs[String]("type") +"  "+ row.getAs[Double]("value"));
         row.getAs[String]("type") match {
           //                          case "water" => ????
@@ -83,7 +85,7 @@ object EventGenerator {
       })
 
     //convert data frame to json
-    val jsonDf = join_df.select(to_json(struct(join_df.columns.map(col): _*)))
+    val jsonDf = events.select(to_json(struct(join_df.columns.map(col): _*)))
 
     val query = jsonDf
       .writeStream
